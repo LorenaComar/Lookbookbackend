@@ -34,7 +34,8 @@ app.get("/home", (req, res) => {
 })
 
 app.post("/", (req, res) => {
-    res.send(req.body);
+    console.log(req.body);
+    res.send(`<h1>Olá ${req.body.name} seu livro favorito é o ${req.body.bestBook}`);
 })
 
 const port = process.env.PORT;
