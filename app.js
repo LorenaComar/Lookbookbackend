@@ -7,7 +7,6 @@ const cors = require('cors');
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
-
 //conexão com o banco de dados
 const con = mysql.createConnection({
     host: process.env.HOST,
@@ -38,6 +37,7 @@ const port = process.env.PORT;
 
 app.use(bodyParser.json());
 app.use(cors());
+
 
 
 app.post("/insert/desejados", (req, res) => {
@@ -169,7 +169,7 @@ app.delete("/delete/disponiveis/:id", (req,res) => {
 
 app.post("/register", (req, res) => {
     const email = req.body.email;
-    const senha = req.body.password;
+    const senha = req.body.senha;
 
     const sqlSelect = 'SELECT * FROM usuarios WHERE email = ?'
     con.query(sqlSelect, [email], (err, result) => {
@@ -177,23 +177,55 @@ app.post("/register", (req, res) => {
         console.log(err);
       }
       if (result.length == 0) {
-        bcrypt.hash(senha, saltRounds, (err, hash) => {
           const sqlInsert = 'INSERT INTO usuarios (email, senha) VALUES (?, ?)';
 
-          con.query(sqlInsert, [email, hash], (err, response) => {
+          con.query(sqlInsert, [email, senha], (err, response) => {
               if (err) {
-                console.log("Cadastro de usuário realizado sem sucesso")
-              }
-  
+                console.log("Cadastro de usuário realizado sem sucesso", err)
+              } else {
+              
               res.send({ msg: "Usuário cadastrado com sucesso" });
+              }
             }
           );
-        });
+
       } else {
         res.send({ msg: "Email já cadastrado" });
       }
     });
   });
+
+
+app.post('/login', (req, res) => {
+
+    const email = req.body.email;
+    const senha = req.body.senha;
+
+    console.log(email, senha);
+
+	con.query("SELECT * FROM usuarios WHERE email = ?", [email], (err, result) => {
+        if (err) {
+          res.send(err);
+        }
+        if (result.length > 0) {
+            bcrypt.compare(senha, result[0].senha, (error, response) => {
+            if (error) {
+              res.send(error);
+            }
+            if (response == true) {
+              res.send({ msg: "Email ou senha incorreta" });
+              
+            } else {
+              res.send({ msg: "Usuário logado com sucesso!" })
+            }
+          });
+        } else {
+          res.send({ msg: "Usuário não registrado!" });
+        }
+      });
+});
+
+
 
 
 //axios
