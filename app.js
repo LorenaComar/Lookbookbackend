@@ -5,7 +5,7 @@ const app = express();
 const mysql = require('mysql2');
 const cors = require('cors');
 const bcrypt = require("bcrypt");
-const { AxiosError } = require('axios');
+const saltRounds = 10;
 
 
 //conexão com o banco de dados
@@ -166,8 +166,37 @@ app.delete("/delete/disponiveis/:id", (req,res) => {
     });
 });
 
+
+app.post("/register", (req, res) => {
+    const email = req.body.email;
+    const senha = req.body.password;
+
+    const sqlSelect = 'SELECT * FROM usuarios WHERE email = ?'
+    con.query(sqlSelect, [email], (err, result) => {
+      if (err) {
+        console.log(err);
+      }
+      if (result.length == 0) {
+        bcrypt.hash(senha, saltRounds, (err, hash) => {
+          const sqlInsert = 'INSERT INTO usuarios (email, senha) VALUES (?, ?)';
+
+          con.query(sqlInsert, [email, hash], (err, response) => {
+              if (err) {
+                console.log("Cadastro de usuário realizado sem sucesso")
+              }
+  
+              res.send({ msg: "Usuário cadastrado com sucesso" });
+            }
+          );
+        });
+      } else {
+        res.send({ msg: "Email já cadastrado" });
+      }
+    });
+  });
+
+
 //axios
 app.listen(port, (req, res) => {
-    console.log(`Server is running in http://localhost:${
-    port}`)
+    console.log(`Server is running in http://localhost:${port}`)
 });
