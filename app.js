@@ -168,6 +168,7 @@ app.delete("/delete/disponiveis/:id", (req,res) => {
 
 
 app.post("/register", (req, res) => {
+    const nome = req.body.nome;
     const email = req.body.email;
     const senha = req.body.senha;
 
@@ -177,9 +178,9 @@ app.post("/register", (req, res) => {
         console.log(err);
       }
       if (result.length == 0) {
-          const sqlInsert = 'INSERT INTO usuarios (email, senha) VALUES (?, ?)';
+          const sqlInsert = 'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)';
 
-          con.query(sqlInsert, [email, senha], (err, response) => {
+          con.query(sqlInsert, [nome, email, senha], (err, response) => {
               if (err) {
                 console.log("Cadastro de usuário realizado sem sucesso", err)
               } else {
