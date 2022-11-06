@@ -225,6 +225,21 @@ app.post('/login', (req, res) => {
       });
 });
 
+app.post("/insert/troca", (req, res) => {
+    const {data, hora, local} = req.body;
+    console.log(req.body);
+    console.log(`Sua troca foi marcada para dia ${data}, às ${hora} horas em ${local}`);
+
+    const sqlInsert = 'INSERT INTO troca (data, hora, local) VALUES (?, ?, ?)';
+    con.query(sqlInsert, [data, hora, local], (err, result) => {
+        if (err) {
+            console.log('Troca NÃO REALIZADA');
+        }else{
+            console.log('Troca REALIZADA');
+        }
+    })
+});
+
 
 
 
