@@ -227,12 +227,12 @@ app.post('/login', (req, res) => {
 });
 
 app.post("/insert/troca", (req, res) => {
-    const {data, hora, local} = req.body;
+    const {data, hora, local, livrodis, livrodes} = req.body;
     console.log(req.body);
     console.log(`Sua troca foi marcada para dia ${data}, às ${hora} horas em ${local}`);
 
-    const sqlInsert = 'INSERT INTO troca (data, hora, local) VALUES (?, ?, ?)';
-    con.query(sqlInsert, [data, hora, local], (err, result) => {
+    const sqlInsert = 'INSERT INTO troca (data, hora, local, livrodis, livrodes) VALUES (?, ?, ?, ?, ?)';
+    con.query(sqlInsert, [data, hora, local, livrodis, livrodes], (err, result) => {
         if (err) {
             console.log('Troca NÃO REALIZADA');
         }else{
@@ -241,6 +241,56 @@ app.post("/insert/troca", (req, res) => {
     })
 });
 
+app.get("/list/troca", (req, res) => {
+    const sqlSelect = 'SELECT * FROM troca';
+    
+    con.query(sqlSelect, (err, result) => {
+        if(err){
+            console.log('Seleção das trocas realizada SEM SUCESSO')
+        } else {
+            console.log('Seleção das trocas realizada COM SUCESSO')
+            res.send(result)
+        }
+    })
+});
+
+app.put("/edit/troca", (req, res) => {
+    const { id } = req.body;
+    const { data } = req.body;
+    const { hora } = req.body;
+    const { local } = req.body;
+    const { livrodis } = req.body;
+    const { livrodes } = req.body;
+
+    const sqlUpdate = "UPDATE troca SET data = ?, hora = ?, local = ?, livrodis = ?, livrodes = ? WHERE id = ?";
+
+    con.query(sqlUpdate, [data, hora, local, livrodis, livrodes, id], (err, result) => {
+        if(err){
+            console.log("Update da troca realizado SEM SUCESSO");
+            console.log(err);
+        }
+        else{
+            console.log("Update da troca realizado COM SUCESSO");
+            res.send(result);
+        }
+    })
+});
+
+app.delete("/delete/troca/:id", (req,res) => {
+    const { id } = req.params;
+
+    const sqlDelete = "DELETE from troca WHERE id = ?";
+
+    con.query(sqlDelete, [id], (err, result) => {
+        if(err) { 
+            console.log("Troca deletada SEM SUCESSO");
+            console.log(err);
+        } else {
+            console.log("Troca deletada COM SUCESSO");
+            res.send(result);
+        }
+    });
+});
 
 
 
