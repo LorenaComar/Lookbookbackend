@@ -7,24 +7,10 @@ const cors = require('cors');
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const fileUpload = require("express-fileupload");
+const con = require("./config/sql");
 
-//conexão com o banco de dados
-const con = mysql.createConnection({
-    host: process.env.HOST,
-    user: process.env.USER,
-    password: process.env.PASSWORD,
-    database: process.env.DATABASE
-});
-
-con.connect((err) => {
-    if(err){
-        console.log('Erro conectando ao banco de dados...', err)
-        return
-    }
-    console.log('Conexão estabelecida!')
-});
-
-const TweetSql = require("./services/tweet");
+const path = require("path");
+const fs = require("fs");
 
 
 const port = process.env.PORT;
@@ -297,9 +283,137 @@ app.delete("/delete/troca/:id", (req,res) => {
     });
 });
 
+
+
+
+
+
+//Twitter sql
+String.prototype.hashCode = function () {
+    var hash = 0,
+      i,
+      chr;
+    if (this.length === 0) return hash;
+    for (i = 0; i < this.length; i++) {
+      chr = this.charCodeAt(i);
+      hash = (hash << 5) - hash + chr;
+      hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+  };
+  
+  const verifyFileFormat = (mimetype) => {
+    if (
+      mimetype != "image/png" &&
+      mimetype != "image/jpeg" &&
+      mimetype != "image/jpg"
+    ) {
+      return {
+        erro: true,
+        mensagem: "Formato de arquivo inválido",
+      };
+    }
+    return false;
+  };
+  
+  module.exports = class TweetSql {
+    constructor(userId) {
+      this.userId = userId;
+    }
+  
+    saveImage = async (image) => {
+      const targetPath = path.join(
+        __dirname,
+        `../../../Lookbook/public/images/users/${this.userId}/`
+      );
+      if (!fs.existsSync(targetPath)) {
+        await fs.mkdirSync(targetPath);
+      }
+      const imageExtension = image.mimetype;
+      const extension = imageExtension.split("image/");
+  
+      const imageName = `${new Date().getTime()}_${image.name.hashCode()}.${
+        extension[1]
+      }`;
+  
+      await fs.writeFile(path.join(targetPath, imageName), image.data, (err) => {
+        return err;
+      });
+      return imageName;
+    };
+  
+    getTweetsByData = async (page) => {
+      try {
+        const sqlCommand = `SELECT * FROM publicacao ORDER BY data_publicacao DESC LIMIT 10 OFFSET ${
+          page * 10
+        }`;
+  
+        return new Promise((resolve, reject) => {
+          con.query(sqlCommand, async (err, results, fields) => {
+            if (err) {
+              throw err;
+            }
+            if (results === undefined) {
+              reject(new Error("Error rows is undefined"));
+            } else {
+              resolve(results);
+            }
+          });
+        });
+      } catch (error) {
+        throw error;
+      }
+    };
+  
+    insertSimpleTweet = async (text) => {
+      try {
+        const sqlCommand = `INSERT INTO publicacao (texto_publicacao, data_publicacao, cod_usuario) VALUES (?, ?, ?)`;
+  
+        const values = [text, new Date(), this.userId];
+  
+        con.query(sqlCommand, values, (err, results) => {
+          if (err) {
+            throw err;
+          }
+          return results;
+        });
+      } catch (error) {
+        throw error;
+      }
+    };
+  
+    insertImageTweet = async (text, image) => {
+      try {
+        const imagePath = await this.saveImage(image);
+  
+        const isNotImage = verifyFileFormat(image.mimetype);
+  
+        if (isNotImage) {
+          return isNotImage;
+        }
+  
+        const sqlCommand = `INSERT INTO publicacao (texto_publicacao, imagem_publicacao, data_publicacao, cod_usuario) VALUES (?, ?, ?, ?)`;
+  
+        const values = [text, imagePath, new Date(), this.userId];
+  
+        con.query(sqlCommand, values, (err, results) => {
+          if (err) {
+            throw err;
+          }
+          return results;
+        });
+      } catch (error) {
+        throw error;
+      }
+    };
+  };
+
+
+//TWITTER POSTS
+
 app.get("/feed", async (req, res, next) => {
     const page = req.query.page;
-    const tweetSql = new TweetSql(1);
+    const tweetSql = new TweetSql(14);
 
     const tweets = await tweetSql.getTweetsByData(page);
 
@@ -307,7 +421,7 @@ app.get("/feed", async (req, res, next) => {
 });
 
 app.post("/tweet", async (req, res, next) => {
-  const tweetSql = new TweetSql(1);
+  const tweetSql = new TweetSql(14);
   const text = req.body.text;
   const files = req.files;
 
