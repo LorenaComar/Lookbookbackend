@@ -6,7 +6,6 @@ const mysql = require('mysql2');
 const cors = require('cors');
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
-const fileUpload = require("express-fileupload");
 
 //conexão com o banco de dados
 const con = mysql.createConnection({
@@ -24,26 +23,22 @@ con.connect((err) => {
     console.log('Conexão estabelecida!')
 });
 
-const TweetSql = require("./services/tweet");
-
+/*
+con.end((err) => {
+    if(err){
+        console.log('Erro to finish connection...', err)
+        return
+    }
+    console.log('Conexão finalizada!')
+})
+*/
 
 const port = process.env.PORT;
 
 app.use(bodyParser.json());
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(fileUpload());
 
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE");
-    res.header(
-      "Access-Control-Allow-Headers",
-      "X-PINGOTHER, Content-Type, Authorization"
-    );
-  
-    next();
-});
+
 
 app.post("/insert/desejados", (req, res) => {
     const {titulo, autor} = req.body;
@@ -295,52 +290,6 @@ app.delete("/delete/troca/:id", (req,res) => {
             res.send(result);
         }
     });
-});
-
-app.get("/feed", async (req, res, next) => {
-    const page = req.query.page;
-    const tweetSql = new TweetSql(1);
-
-    const tweets = await tweetSql.getTweetsByData(page);
-
-    res.send(tweets);
-});
-
-app.post("/tweet", async (req, res, next) => {
-  const tweetSql = new TweetSql(1);
-  const text = req.body.text;
-  const files = req.files;
-
-  if (files) {
-    res.send(
-      (await tweetSql.insertImageTweet(text, files.image)) || "Tweet criado"
-    );
-  } else {
-    await tweetSql.insertSimpleTweet(text);
-    res.send("Tweet criado");
-  }
-});
-
-app.post("/upload-image", async (req, res, next) => {
-  const image = req.files.image;
-
-  if (image) {
-    const result = await saveImage(image);
-    if (result) {
-      return next(result);
-    }
-
-    return res.json({
-      erro: false,
-      mensagem: "Upload realizado com sucesso!",
-    });
-  }
-
-  return res.status(400).json({
-    erro: true,
-    mensagem:
-      "Erro: Upload não realizado com sucesso, necessário enviar uma imagem png, jpg ou jpeg!",
-  });
 });
 
 
