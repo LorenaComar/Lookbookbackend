@@ -7,24 +7,10 @@ const cors = require('cors');
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const fileUpload = require("express-fileupload");
+const con = require("./config/sql");
 
-//conexão com o banco de dados
-const con = mysql.createConnection({
-    host: process.env.HOST,
-    user: process.env.USER,
-    password: process.env.PASSWORD,
-    database: process.env.DATABASE
-});
-
-con.connect((err) => {
-    if(err){
-        console.log('Erro conectando ao banco de dados...', err)
-        return
-    }
-    console.log('Conexão estabelecida!')
-});
-
-const TweetSql = require("./services/tweet");
+const path = require("path");
+const fs = require("fs");
 
 
 const port = process.env.PORT;
@@ -50,7 +36,7 @@ app.post("/insert/desejados", (req, res) => {
     console.log(req.body);
     console.log(`<h1>Olá ${autor} seu livro ${titulo} foi um sucesso`);
 
-    const sqlInsert = 'INSERT INTO livrosdesejados (titulo, autor) VALUES (?, ?)';
+    const sqlInsert = 'INSERT INTO livrosdesejados (titulo_livrosdesejados, autor_livrosdesejados) VALUES (?, ?)';
     con.query(sqlInsert, [titulo, autor], (err, result) => {
         if (err) {
             console.log('Inserção de dados no livros desejados realizada SEM SUCESSO');
@@ -65,7 +51,7 @@ app.post("/insert/disponiveis", (req, res) => {
     console.log(req.body);
     console.log(`<h1>Olá ${autor} seu livro ${titulo} foi um sucesso`);
 
-    const sqlInsert = 'INSERT INTO livrosdisponiveis (titulo, autor) VALUES (?, ?)';
+    const sqlInsert = 'INSERT INTO livrosdisponiveis (titulo_livrosdisponiveis, autor_livrosdisponiveis) VALUES (?, ?)';
     con.query(sqlInsert, [titulo, autor], (err, result) => {
         if (err) {
             console.log('Inserção de dados no livros disponíveis realizada SEM SUCESSO');
@@ -106,7 +92,7 @@ app.put("/edit/desejados", (req, res) => {
     const { titulo } = req.body;
     const { autor } = req.body;
 
-    const sqlUpdate = "UPDATE livrosdesejados SET titulo = ?, autor = ? WHERE id = ?";
+    const sqlUpdate = "UPDATE livrosdesejados SET titulo_livrosdesejados = ?, autor_livrosdesejados = ? WHERE id_livrosdesejados = ?";
 
     con.query(sqlUpdate, [titulo, autor, id], (err, result) => {
         if(err){
@@ -125,7 +111,7 @@ app.put("/edit/disponiveis", (req, res) => {
     const { titulo } = req.body;
     const { autor } = req.body;
 
-    const sqlUpdate = "UPDATE livrosdisponiveis SET titulo = ?, autor = ? WHERE id = ?";
+    const sqlUpdate = "UPDATE livrosdisponiveis SET titulo_livrosdisponiveis = ?, autor_livrosdisponiveis = ? WHERE id_livrosdisponiveis = ?";
 
     con.query(sqlUpdate, [titulo, autor, id], (err, result) => {
         if(err){
@@ -142,7 +128,7 @@ app.put("/edit/disponiveis", (req, res) => {
 app.delete("/delete/desejados/:id", (req,res) => {
     const { id } = req.params;
 
-    const sqlDelete = "DELETE from livrosdesejados WHERE id = ?";
+    const sqlDelete = "DELETE from livrosdesejados WHERE id_livrosdesejados = ?";
 
     con.query(sqlDelete, [id], (err, result) => {
         if(err) { 
@@ -158,7 +144,7 @@ app.delete("/delete/desejados/:id", (req,res) => {
 app.delete("/delete/disponiveis/:id", (req,res) => {
     const { id } = req.params;
 
-    const sqlDelete = "DELETE from livrosdisponiveis WHERE id = ?";
+    const sqlDelete = "DELETE from livrosdisponiveis WHERE id_livrosdisponiveis = ?";
 
     con.query(sqlDelete, [id], (err, result) => {
         if(err) { 
@@ -177,13 +163,13 @@ app.post("/register", (req, res) => {
     const email = req.body.email;
     const senha = req.body.senha;
 
-    const sqlSelect = 'SELECT * FROM usuarios WHERE email = ?'
+    const sqlSelect = 'SELECT * FROM usuarios WHERE email_usuario = ?'
     con.query(sqlSelect, [email], (err, result) => {
       if (err) {
         console.log(err);
       }
       if (result.length == 0) {
-          const sqlInsert = 'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)';
+          const sqlInsert = 'INSERT INTO usuarios (nome_usuario, email_usuario, senha_usuario) VALUES (?, ?, ?)';
 
           con.query(sqlInsert, [nome, email, senha], (err, response) => {
               if (err) {
@@ -209,7 +195,7 @@ app.post('/login', (req, res) => {
 
     console.log(email, senha);
 
-	con.query("SELECT * FROM usuarios WHERE email = ?", [email], (err, result) => {
+	con.query("SELECT * FROM usuarios WHERE email_usuario = ?", [email], (err, result) => {
         if (err) {
           res.send(err);
         }
@@ -236,7 +222,7 @@ app.post("/insert/troca", (req, res) => {
     console.log(req.body);
     console.log(`Sua troca foi marcada para dia ${data}, às ${hora} horas em ${local}`);
 
-    const sqlInsert = 'INSERT INTO troca (data, hora, local, livrodis, livrodes) VALUES (?, ?, ?, ?, ?)';
+    const sqlInsert = 'INSERT INTO troca (data_troca, hora_troca, local_troca, livrodis_troca, livrodes_troca) VALUES (?, ?, ?, ?, ?)';
     con.query(sqlInsert, [data, hora, local, livrodis, livrodes], (err, result) => {
         if (err) {
             console.log('Troca NÃO REALIZADA');
@@ -267,7 +253,7 @@ app.put("/edit/troca", (req, res) => {
     const { livrodis } = req.body;
     const { livrodes } = req.body;
 
-    const sqlUpdate = "UPDATE troca SET data = ?, hora = ?, local = ?, livrodis = ?, livrodes = ? WHERE id = ?";
+    const sqlUpdate = "UPDATE troca SET data_troca = ?, hora_troca = ?, local_troca = ?, livrodis_troca = ?, livrodes_troca = ? WHERE id_troca = ?";
 
     con.query(sqlUpdate, [data, hora, local, livrodis, livrodes, id], (err, result) => {
         if(err){
@@ -284,7 +270,7 @@ app.put("/edit/troca", (req, res) => {
 app.delete("/delete/troca/:id", (req,res) => {
     const { id } = req.params;
 
-    const sqlDelete = "DELETE from troca WHERE id = ?";
+    const sqlDelete = "DELETE from troca WHERE id_troca = ?";
 
     con.query(sqlDelete, [id], (err, result) => {
         if(err) { 
@@ -297,9 +283,137 @@ app.delete("/delete/troca/:id", (req,res) => {
     });
 });
 
+
+
+
+
+
+//Twitter sql
+String.prototype.hashCode = function () {
+    var hash = 0,
+      i,
+      chr;
+    if (this.length === 0) return hash;
+    for (i = 0; i < this.length; i++) {
+      chr = this.charCodeAt(i);
+      hash = (hash << 5) - hash + chr;
+      hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+  };
+  
+  const verifyFileFormat = (mimetype) => {
+    if (
+      mimetype != "image/png" &&
+      mimetype != "image/jpeg" &&
+      mimetype != "image/jpg"
+    ) {
+      return {
+        erro: true,
+        mensagem: "Formato de arquivo inválido",
+      };
+    }
+    return false;
+  };
+  
+  module.exports = class TweetSql {
+    constructor(userId) {
+      this.userId = userId;
+    }
+  
+    saveImage = async (image) => {
+      const targetPath = path.join(
+        __dirname,
+        `../../../Lookbook/public/images/users/${this.userId}/`
+      );
+      if (!fs.existsSync(targetPath)) {
+        await fs.mkdirSync(targetPath);
+      }
+      const imageExtension = image.mimetype;
+      const extension = imageExtension.split("image/");
+  
+      const imageName = `${new Date().getTime()}_${image.name.hashCode()}.${
+        extension[1]
+      }`;
+  
+      await fs.writeFile(path.join(targetPath, imageName), image.data, (err) => {
+        return err;
+      });
+      return imageName;
+    };
+  
+    getTweetsByData = async (page) => {
+      try {
+        const sqlCommand = `SELECT * FROM publicacao ORDER BY data_publicacao DESC LIMIT 10 OFFSET ${
+          page * 10
+        }`;
+  
+        return new Promise((resolve, reject) => {
+          con.query(sqlCommand, async (err, results, fields) => {
+            if (err) {
+              throw err;
+            }
+            if (results === undefined) {
+              reject(new Error("Error rows is undefined"));
+            } else {
+              resolve(results);
+            }
+          });
+        });
+      } catch (error) {
+        throw error;
+      }
+    };
+  
+    insertSimpleTweet = async (text) => {
+      try {
+        const sqlCommand = `INSERT INTO publicacao (texto_publicacao, data_publicacao, cod_usuario) VALUES (?, ?, ?)`;
+  
+        const values = [text, new Date(), this.userId];
+  
+        con.query(sqlCommand, values, (err, results) => {
+          if (err) {
+            throw err;
+          }
+          return results;
+        });
+      } catch (error) {
+        throw error;
+      }
+    };
+  
+    insertImageTweet = async (text, image) => {
+      try {
+        const imagePath = await this.saveImage(image);
+  
+        const isNotImage = verifyFileFormat(image.mimetype);
+  
+        if (isNotImage) {
+          return isNotImage;
+        }
+  
+        const sqlCommand = `INSERT INTO publicacao (texto_publicacao, imagem_publicacao, data_publicacao, cod_usuario) VALUES (?, ?, ?, ?)`;
+  
+        const values = [text, imagePath, new Date(), this.userId];
+  
+        con.query(sqlCommand, values, (err, results) => {
+          if (err) {
+            throw err;
+          }
+          return results;
+        });
+      } catch (error) {
+        throw error;
+      }
+    };
+  };
+
+
+//TWITTER POSTS
+
 app.get("/feed", async (req, res, next) => {
     const page = req.query.page;
-    const tweetSql = new TweetSql(1);
+    const tweetSql = new TweetSql(14);
 
     const tweets = await tweetSql.getTweetsByData(page);
 
@@ -307,7 +421,7 @@ app.get("/feed", async (req, res, next) => {
 });
 
 app.post("/tweet", async (req, res, next) => {
-  const tweetSql = new TweetSql(1);
+  const tweetSql = new TweetSql(14);
   const text = req.body.text;
   const files = req.files;
 
