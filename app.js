@@ -287,7 +287,6 @@ app.delete("/delete/troca/:id", (req,res) => {
 
 
 
-/*
 //Twitter sql
 String.prototype.hashCode = function () {
     var hash = 0,
@@ -456,7 +455,6 @@ app.post("/upload-image", async (req, res, next) => {
       "Erro: Upload não realizado com sucesso, necessário enviar uma imagem png, jpg ou jpeg!",
   });
 });
-*/
 
 
 //axios
