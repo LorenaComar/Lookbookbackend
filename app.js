@@ -45,7 +45,7 @@ app.post("/insert/desejados", (req, res) => {
     console.log(req.body);
     console.log(`<h1>Olá ${autor} seu livro ${titulo} foi um sucesso`);
 
-    const sqlInsert = 'INSERT INTO livrosdesejados (titulo, autor) VALUES (?, ?)';
+    const sqlInsert = 'INSERT INTO livrosdesejados (titulo_livrosdesejados, autor_livrosdesejados) VALUES (?, ?)';
     con.query(sqlInsert, [titulo, autor], (err, result) => {
         if (err) {
             console.log('Inserção de dados no livros desejados realizada SEM SUCESSO');
@@ -60,7 +60,7 @@ app.post("/insert/disponiveis", (req, res) => {
     console.log(req.body);
     console.log(`<h1>Olá ${autor} seu livro ${titulo} foi um sucesso`);
 
-    const sqlInsert = 'INSERT INTO livrosdisponiveis (titulo, autor) VALUES (?, ?)';
+    const sqlInsert = 'INSERT INTO livrosdisponiveis (titulo_livrosdisponiveis, autor_livrosdisponiveis) VALUES (?, ?)';
     con.query(sqlInsert, [titulo, autor], (err, result) => {
         if (err) {
             console.log('Inserção de dados no livros disponíveis realizada SEM SUCESSO');
@@ -101,7 +101,7 @@ app.put("/edit/desejados", (req, res) => {
     const { titulo } = req.body;
     const { autor } = req.body;
 
-    const sqlUpdate = "UPDATE livrosdesejados SET titulo = ?, autor = ? WHERE id = ?";
+    const sqlUpdate = "UPDATE livrosdesejados SET titulo_livrosdesejados = ?, autor_livrosdesejados = ? WHERE id_livrosdesejados = ?";
 
     con.query(sqlUpdate, [titulo, autor, id], (err, result) => {
         if(err){
@@ -120,7 +120,7 @@ app.put("/edit/disponiveis", (req, res) => {
     const { titulo } = req.body;
     const { autor } = req.body;
 
-    const sqlUpdate = "UPDATE livrosdisponiveis SET titulo = ?, autor = ? WHERE id = ?";
+    const sqlUpdate = "UPDATE livrosdisponiveis SET titulo_livrosdisponiveis = ?, autor_livrosdisponiveis = ? WHERE id_livrosdisponiveis = ?";
 
     con.query(sqlUpdate, [titulo, autor, id], (err, result) => {
         if(err){
@@ -137,7 +137,7 @@ app.put("/edit/disponiveis", (req, res) => {
 app.delete("/delete/desejados/:id", (req,res) => {
     const { id } = req.params;
 
-    const sqlDelete = "DELETE from livrosdesejados WHERE id = ?";
+    const sqlDelete = "DELETE from livrosdesejados WHERE id_livrosdesejados = ?";
 
     con.query(sqlDelete, [id], (err, result) => {
         if(err) { 
@@ -153,7 +153,7 @@ app.delete("/delete/desejados/:id", (req,res) => {
 app.delete("/delete/disponiveis/:id", (req,res) => {
     const { id } = req.params;
 
-    const sqlDelete = "DELETE from livrosdisponiveis WHERE id = ?";
+    const sqlDelete = "DELETE from livrosdisponiveis WHERE id_livrosdisponiveis = ?";
 
     con.query(sqlDelete, [id], (err, result) => {
         if(err) { 
@@ -172,13 +172,13 @@ app.post("/register", (req, res) => {
     const email = req.body.email;
     const senha = req.body.senha;
 
-    const sqlSelect = 'SELECT * FROM usuarios WHERE email = ?'
+    const sqlSelect = 'SELECT * FROM usuarios WHERE email_usuario = ?'
     con.query(sqlSelect, [email], (err, result) => {
       if (err) {
         console.log(err);
       }
       if (result.length == 0) {
-          const sqlInsert = 'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)';
+          const sqlInsert = 'INSERT INTO usuarios (nome_usuario, email_usuario, senha_usuario) VALUES (?, ?, ?)';
 
           con.query(sqlInsert, [nome, email, senha], (err, response) => {
               if (err) {
@@ -204,7 +204,7 @@ app.post('/login', (req, res) => {
 
     console.log(email, senha);
 
-	con.query("SELECT * FROM usuarios WHERE email = ?", [email], (err, result) => {
+	con.query("SELECT * FROM usuarios WHERE email_usuario = ?", [email], (err, result) => {
         if (err) {
           res.send(err);
         }
@@ -231,7 +231,7 @@ app.post("/insert/troca", (req, res) => {
     console.log(req.body);
     console.log(`Sua troca foi marcada para dia ${data}, às ${hora} horas em ${local}`);
 
-    const sqlInsert = 'INSERT INTO troca (data, hora, local, livrodis, livrodes) VALUES (?, ?, ?, ?, ?)';
+    const sqlInsert = 'INSERT INTO troca (data_troca, hora_troca, local_troca, livrodis_troca, livrodes_troca) VALUES (?, ?, ?, ?, ?)';
     con.query(sqlInsert, [data, hora, local, livrodis, livrodes], (err, result) => {
         if (err) {
             console.log('Troca NÃO REALIZADA');
@@ -262,7 +262,7 @@ app.put("/edit/troca", (req, res) => {
     const { livrodis } = req.body;
     const { livrodes } = req.body;
 
-    const sqlUpdate = "UPDATE troca SET data = ?, hora = ?, local = ?, livrodis = ?, livrodes = ? WHERE id = ?";
+    const sqlUpdate = "UPDATE troca SET data_troca = ?, hora_troca = ?, local_troca = ?, livrodis_troca = ?, livrodes_troca = ? WHERE id_troca = ?";
 
     con.query(sqlUpdate, [data, hora, local, livrodis, livrodes, id], (err, result) => {
         if(err){
@@ -279,7 +279,7 @@ app.put("/edit/troca", (req, res) => {
 app.delete("/delete/troca/:id", (req,res) => {
     const { id } = req.params;
 
-    const sqlDelete = "DELETE from troca WHERE id = ?";
+    const sqlDelete = "DELETE from troca WHERE id_troca = ?";
 
     con.query(sqlDelete, [id], (err, result) => {
         if(err) { 
