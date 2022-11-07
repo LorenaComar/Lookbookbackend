@@ -205,10 +205,10 @@ app.post('/login', (req, res) => {
               res.send(error);
             }
             if (response == true) {
-              res.send({ msg: "Email ou senha incorreta" });
+              console.log("Email ou senha incorreta");
               
             } else {
-              res.send({ msg: "Usuário logado com sucesso!" })
+              console.log("Usuário logado com sucesso!")
             }
           });
         } else {
@@ -287,7 +287,7 @@ app.delete("/delete/troca/:id", (req,res) => {
 
 
 
-
+/*
 //Twitter sql
 String.prototype.hashCode = function () {
     var hash = 0,
@@ -456,7 +456,7 @@ app.post("/upload-image", async (req, res, next) => {
       "Erro: Upload não realizado com sucesso, necessário enviar uma imagem png, jpg ou jpeg!",
   });
 });
-
+*/
 
 
 //axios
