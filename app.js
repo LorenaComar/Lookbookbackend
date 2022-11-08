@@ -7,10 +7,12 @@ const cors = require('cors');
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const fileUpload = require("express-fileupload");
+const TweetSql = require("./services/tweet")
 const con = require("./config/sql");
 
 const path = require("path");
 const fs = require("fs");
+const Troca = require('./services/troca');
 
 
 const port = process.env.PORT;
@@ -222,27 +224,17 @@ app.post("/insert/troca", (req, res) => {
     console.log(req.body);
     console.log(`Sua troca foi marcada para dia ${data}, às ${hora} horas em ${local}`);
 
-    const sqlInsert = 'INSERT INTO troca (data_troca, hora_troca, local_troca, livrodis_troca, livrodes_troca) VALUES (?, ?, ?, ?, ?)';
-    con.query(sqlInsert, [data, hora, local, livrodis, livrodes], (err, result) => {
-        if (err) {
-            console.log('Troca NÃO REALIZADA');
-        }else{
-            console.log('Troca REALIZADA');
-        }
-    })
+    const trocaService = new Troca(con);
+
+    trocaService.insertTroca({data, hora, local, livrodis, livrodes})
 });
 
-app.get("/list/troca", (req, res) => {
-    const sqlSelect = 'SELECT * FROM troca';
-    
-    con.query(sqlSelect, (err, result) => {
-        if(err){
-            console.log('Seleção das trocas realizada SEM SUCESSO')
-        } else {
-            console.log('Seleção das trocas realizada COM SUCESSO')
-            res.send(result)
-        }
-    })
+app.get("/list/troca", async (req, res) => {
+    const trocaService = new Troca(con);
+
+    const trocas = await trocaService.listTroca();
+
+    res.json(trocas);
 });
 
 app.put("/edit/troca", (req, res) => {
@@ -253,18 +245,9 @@ app.put("/edit/troca", (req, res) => {
     const { livrodis } = req.body;
     const { livrodes } = req.body;
 
-    const sqlUpdate = "UPDATE troca SET data_troca = ?, hora_troca = ?, local_troca = ?, livrodis_troca = ?, livrodes_troca = ? WHERE id_troca = ?";
+    const trocaService = new Troca(con);
 
-    con.query(sqlUpdate, [data, hora, local, livrodis, livrodes, id], (err, result) => {
-        if(err){
-            console.log("Update da troca realizado SEM SUCESSO");
-            console.log(err);
-        }
-        else{
-            console.log("Update da troca realizado COM SUCESSO");
-            res.send(result);
-        }
-    })
+    trocaService.editTroca({id, data, hora, local, livrodis, livrodes})
 });
 
 app.delete("/delete/troca/:id", (req,res) => {
@@ -284,135 +267,11 @@ app.delete("/delete/troca/:id", (req,res) => {
 });
 
 
-
-
-
-//Twitter sql
-String.prototype.hashCode = function () {
-    var hash = 0,
-      i,
-      chr;
-    if (this.length === 0) return hash;
-    for (i = 0; i < this.length; i++) {
-      chr = this.charCodeAt(i);
-      hash = (hash << 5) - hash + chr;
-      hash |= 0; // Convert to 32bit integer
-    }
-    return hash;
-  };
-  
-  const verifyFileFormat = (mimetype) => {
-    if (
-      mimetype != "image/png" &&
-      mimetype != "image/jpeg" &&
-      mimetype != "image/jpg"
-    ) {
-      return {
-        erro: true,
-        mensagem: "Formato de arquivo inválido",
-      };
-    }
-    return false;
-  };
-  
-  module.exports = class TweetSql {
-    constructor(userId) {
-      this.userId = userId;
-    }
-  
-    saveImage = async (image) => {
-      const targetPath = path.join(
-        __dirname,
-        `../../../Lookbook/public/images/users/${this.userId}/`
-      );
-      if (!fs.existsSync(targetPath)) {
-        await fs.mkdirSync(targetPath);
-      }
-      const imageExtension = image.mimetype;
-      const extension = imageExtension.split("image/");
-  
-      const imageName = `${new Date().getTime()}_${image.name.hashCode()}.${
-        extension[1]
-      }`;
-  
-      await fs.writeFile(path.join(targetPath, imageName), image.data, (err) => {
-        return err;
-      });
-      return imageName;
-    };
-  
-    getTweetsByData = async (page) => {
-      try {
-        const sqlCommand = `SELECT * FROM publicacao ORDER BY data_publicacao DESC LIMIT 10 OFFSET ${
-          page * 10
-        }`;
-  
-        return new Promise((resolve, reject) => {
-          con.query(sqlCommand, async (err, results, fields) => {
-            if (err) {
-              throw err;
-            }
-            if (results === undefined) {
-              reject(new Error("Error rows is undefined"));
-            } else {
-              resolve(results);
-            }
-          });
-        });
-      } catch (error) {
-        throw error;
-      }
-    };
-  
-    insertSimpleTweet = async (text) => {
-      try {
-        const sqlCommand = `INSERT INTO publicacao (texto_publicacao, data_publicacao, cod_usuario) VALUES (?, ?, ?)`;
-  
-        const values = [text, new Date(), this.userId];
-  
-        con.query(sqlCommand, values, (err, results) => {
-          if (err) {
-            throw err;
-          }
-          return results;
-        });
-      } catch (error) {
-        throw error;
-      }
-    };
-  
-    insertImageTweet = async (text, image) => {
-      try {
-        const imagePath = await this.saveImage(image);
-  
-        const isNotImage = verifyFileFormat(image.mimetype);
-  
-        if (isNotImage) {
-          return isNotImage;
-        }
-  
-        const sqlCommand = `INSERT INTO publicacao (texto_publicacao, imagem_publicacao, data_publicacao, cod_usuario) VALUES (?, ?, ?, ?)`;
-  
-        const values = [text, imagePath, new Date(), this.userId];
-  
-        con.query(sqlCommand, values, (err, results) => {
-          if (err) {
-            throw err;
-          }
-          return results;
-        });
-      } catch (error) {
-        throw error;
-      }
-    };
-  };
-
-
 //TWITTER POSTS
 
 app.get("/feed", async (req, res, next) => {
     const page = req.query.page;
-    const tweetSql = new TweetSql(14);
+    const tweetSql = new TweetSql(14, con);
 
     const tweets = await tweetSql.getTweetsByData(page);
 
@@ -420,7 +279,7 @@ app.get("/feed", async (req, res, next) => {
 });
 
 app.post("/tweet", async (req, res, next) => {
-  const tweetSql = new TweetSql(14);
+  const tweetSql = new TweetSql(14, con);
   const text = req.body.text;
   const files = req.files;
 
@@ -433,6 +292,16 @@ app.post("/tweet", async (req, res, next) => {
     res.send("Tweet criado");
   }
 });
+
+app.delete("/tweet", async (req, res, next) => {
+    try {
+        const tweetSql = new TweetSql(14, con);
+        await tweetSql.deleteAllTweets();
+        res.send("Tweets Deletados");
+    } catch(err) {
+        next(err);
+    }
+})
 
 app.post("/upload-image", async (req, res, next) => {
   const image = req.files.image;

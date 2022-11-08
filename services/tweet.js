@@ -1,6 +1,3 @@
-/*
-
-const connection = require("../config/sql");
 const path = require("path");
 const fs = require("fs");
 
@@ -33,14 +30,15 @@ const verifyFileFormat = (mimetype) => {
 };
 
 module.exports = class TweetSql {
-  constructor(userId) {
+  constructor(userId, connection) {
     this.userId = userId;
+    this.connection = connection;
   }
 
   saveImage = async (image) => {
     const targetPath = path.join(
       __dirname,
-      `../../../Lookbook/public/images/users/${this.userId}/`
+      `../../Lookbook/public/images/users/${this.userId}/`
     );
     if (!fs.existsSync(targetPath)) {
       await fs.mkdirSync(targetPath);
@@ -65,7 +63,7 @@ module.exports = class TweetSql {
       }`;
 
       return new Promise((resolve, reject) => {
-        connection.query(sqlCommand, async (err, results, fields) => {
+        this.connection.query(sqlCommand, async (err, results, fields) => {
           if (err) {
             throw err;
           }
@@ -87,11 +85,25 @@ module.exports = class TweetSql {
 
       const values = [text, new Date(), this.userId];
 
-      connection.query(sqlCommand, values, (err, results) => {
+      this.connection.query(sqlCommand, values, (err, results) => {
         if (err) {
           throw err;
         }
         return results;
+      });
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  deleteAllTweets = async (text) => {
+    try {
+      const sqlCommand = `TRUNCATE TABLE publicacao`;
+      this.connection.query(sqlCommand, (err, results) => {
+        if (err) {
+          throw err;
+        }
+        console.log("Tweets deletes")
       });
     } catch (error) {
       throw error;
@@ -112,7 +124,7 @@ module.exports = class TweetSql {
 
       const values = [text, imagePath, new Date(), this.userId];
 
-      connection.query(sqlCommand, values, (err, results) => {
+      this.connection.query(sqlCommand, values, (err, results) => {
         if (err) {
           throw err;
         }
@@ -123,7 +135,3 @@ module.exports = class TweetSql {
     }
   };
 };
-
-module.exports = connection;
-
-*/
