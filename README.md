@@ -1,4 +1,4 @@
-executar o projeto com nodemon dps de instalar:
+Executar o projeto com nodemon depois de instalar:
 
 ### nodemon index.js
 
